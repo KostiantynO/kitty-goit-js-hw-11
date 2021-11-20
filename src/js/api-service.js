@@ -6,11 +6,12 @@ export const settings = { userQuery: '', pageNumber: 1 };
 
 async function getImages() {
   const axiosConfig = {
-    baseURL: 'https://pixabay.com/api/',
-    https: true,
     // search images
+    baseURL: 'https://pixabay.com/api/',
+
+    // pixabay options
     params: {
-      key: `${API_KEY}`, // pixabay options
+      key: `${API_KEY}`,
       q: `${settings.userQuery}`,
       image_type: 'photo',
       orientation: 'horizontal',
@@ -19,15 +20,9 @@ async function getImages() {
       per_page: 40,
     },
   };
-  try {
-    const { data } = await axios(axiosConfig);
-    console.log(data);
-    settings.pageNumber += 1;
-    console.log(settings.pageNumber);
-    return data;
-  } catch (error) {
-    console.log(error);
-  }
+
+  const { data } = await axios(axiosConfig);
+  return data;
 }
 
 export default getImages;
