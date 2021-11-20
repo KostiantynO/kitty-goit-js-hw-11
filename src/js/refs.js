@@ -1,8 +1,11 @@
-const getRefs = () => ({
-  searchForm: document.querySelector('#search-form'),
-  gallery: document.querySelector('[data-gallery]'),
-  searchBtn: document.querySelector('[data-search-btn]'),
-  loadMoreBtn: document.querySelector('[data-load-more]'),
-});
+function getRefs() {
+  return {
+    searchForm: document.querySelector('#search-form'),
+    gallery: document.querySelector('.gallery'),
+    searchBtn: document.querySelector('.search-button'),
+    loadMoreBtn: document.querySelector('.load-more'),
+    searchInput: document.querySelector("[type='text']"),
+  };
+}
 
-export default getRefs;
+export { getRefs };

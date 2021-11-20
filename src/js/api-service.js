@@ -1,83 +1,33 @@
 import axios from 'axios';
 
-class imagesAPI {
-  #query;
-  #page;
-  #perPage;
-  #totalHits;
-  #totalPages;
+const API_KEY = '24390496-f177996fbfc0d62e3e8be5e3c';
 
-  constructor() {
-    this.#query = '';
-    this.#page = 1;
-    this.#perPage = 40;
-    this.#totalHits = 0;
-    this.#totalPages = 1;
-  }
+export const settings = { userQuery: '', pageNumber: 1 };
 
-  async getImages() {
-    const KEY = '24385209-6a81cc27bd8e526ba32a03073';
-
-    const axiosConfig = {
-      // image search
-      baseURL: 'https://pixabay.com/api/',
-      // pixabay options
-      params: {
-        key: `${KEY}`,
-        q: `${this.#query}`,
-        image_type: 'photo',
-        orientation: 'horizontal',
-        safesearch: 'true',
-
-        page: this.page,
-        per_page: this.perPage,
-      },
-    };
-
-    // `https://pixabay.com/api/?key=${KEY}&q=yellow+flowers&image_type=photo`
+async function getImages() {
+  const axiosConfig = {
+    baseURL: 'https://pixabay.com/api',
+    https: true,
+    // search images
+    params: {
+      key: `${API_KEY}`, // pixabay options
+      q: `${settings.userQuery}`,
+      image_type: 'photo',
+      orientation: 'horizontal',
+      safesearch: 'true',
+      page: settings.pageNumber,
+      per_page: 40,
+    },
+  };
+  try {
     const { data } = await axios(axiosConfig);
+    console.log(data);
+    settings.pageNumber += 1;
+    console.log(settings.pageNumber);
     return data;
-  }
-
-  get query() {
-    return this.#query;
-  }
-
-  set query(newQuery) {
-    this.#query = newQuery;
-  }
-
-  get page() {
-    return this.#page;
-  }
-
-  set page(newPage) {
-    this.#page = newPage;
-  }
-
-  get perPage() {
-    return this.#perPage;
-  }
-
-  set perPage(newPerPage) {
-    this.#perPage = newPerPage;
-  }
-
-  get totalHits() {
-    return this.#totalHits;
-  }
-
-  set totalHits(newTotalHits) {
-    this.#totalHits = newTotalHits;
-  }
-
-  get totalPages() {
-    return this.#totalPages;
-  }
-
-  set totalPages(newTotalPages) {
-    this.#totalPages = newTotalPages;
+  } catch (error) {
+    console.log(error);
   }
 }
 
-export default imagesAPI;
+export default getImages;

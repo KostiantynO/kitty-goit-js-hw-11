@@ -1,106 +1,74 @@
-import './sass/main.scss';
+import './css/styles.css';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import axios from 'axios';
-import { Notify } from 'notiflix';
-import { Loading } from 'notiflix';
-
-import debounce from 'lodash/debounce';
-import imagesAPI from './js/api-service';
-import UI from './js/ui-service';
-import getRefs from './js/refs';
-import initModal from './js/modal';
-import smoothScrollAfterRender from './js/scroll';
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
+import { getRefs } from './js/refs';
+import { settings } from './js/api-service';
+import getImages from './js/api-service';
 
 const refs = getRefs();
-const DEBOUNCE_DELAY = 300;
-const DEBOUNCE_SETTINGS = { leading: true, trailing: false };
 
-const imageAPI = new imagesAPI();
+refs.searchForm.addEventListener('submit', onRequestImages);
 
-const fetchAndRenderImages = async () => {
+async function onRequestImages(event) {
+  event.preventDefault();
+  refs.searchBtn.setAttribute('disabled', true);
   try {
-    const response = await imageAPI.getImages();
-    imageAPI.totalHits = response.totalHits;
-    imageAPI.totalPages = imageAPI.totalHits / imageAPI.perPage;
-
-    if (response.hits.length < 1) {
+    settings.userQuery = refs.searchInput.value.trim();
+    settings.pageNumber = 1;
+    const { hits } = await getImages();
+    if (hits.length === 0) {
       Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.',
       );
       return;
     }
-
-    UI.renderGallery(response.hits);
-    UI.show(refs.loadMoreBtn);
-
-    if (imageAPI.page > 1) {
-      smoothScrollAfterRender();
-    }
-
-    imageAPI.page += 1;
+    refs.gallery.innerHTML = '';
+    renderGallery(hits);
+    refs.loadMoreBtn.classList.remove('is-hidden');
   } catch (error) {
-    console.error(error);
+    console.log(error);
   } finally {
-    UI.enable(refs.searchBtn);
+    refs.searchBtn.removeAttribute('disabled');
   }
-};
+}
 
-const onSubmitGetImages = async e => {
-  e.preventDefault();
-  UI.disable(refs.searchBtn);
-  UI.clearUI();
-  imageAPI.query = e.target.elements.searchQuery.value.trim();
-  imageAPI.page = 1;
+function renderGallery(hits) {
+  refs.gallery.insertAdjacentHTML('beforeend', galleryMarkupTamplate(hits));
+}
 
-  await fetchAndRenderImages();
+function galleryMarkupTamplate(hits) {
+  return hits.map(neededProperties).join('');
+}
 
-  if (imageAPI.totalHits > 0) {
-    Notify.success(`Hooray! We found ${imageAPI.totalHits} images.`);
-  }
-
-  try {
-    if (refs.modal) {
-      refs.modal.destroy();
-    }
-
-    refs.modal = initModal('.gallery a');
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-const showAlertPopup = () => {
-  Notify.failure("We're sorry, but you've reached the end of search results.");
-};
-
-const onLoadMore = async e => {
-  UI.hide(refs.loadMoreBtn);
-
-  // Check the end of the collection to display an alert
-  if (imageAPI.page >= imageAPI.totalPages) {
-    return showAlertPopup();
-  }
-
-  await fetchAndRenderImages();
-
-  try {
-    refs.modal.refresh();
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-refs.searchForm.addEventListener(
-  'submit',
-  debounce(onSubmitGetImages, DEBOUNCE_DELAY, DEBOUNCE_SETTINGS),
-);
-
-refs.loadMoreBtn.addEventListener(
-  'click',
-  debounce(onLoadMore, DEBOUNCE_DELAY, DEBOUNCE_SETTINGS),
-);
-
-const onImageClick = async e => {
-  e.preventDefault();
-};
-
-refs.gallery.addEventListener('click', onImageClick);
+function neededProperties({
+  webformatURL,
+  largeImageURL,
+  tags,
+  likes,
+  views,
+  comments,
+  downloads,
+}) {
+  return `
+  <div class="photo-card">
+  <a class="gallery-link" href='${largeImageURL}'>
+  <img class="gallery-image" src="${webformatURL}" alt="${tags}" loading="lazy" />
+  </a>
+  <div class="info">
+    <p class="info-item">
+      <b>Likes</b> <span>${likes}</span>
+    </p>
+    <p class="info-item">
+      <b>Views</b> <span>${views}</span>
+    </p>
+    <p class="info-item">
+      <b>Comments</b> <span>${comments}</span>
+    </p>
+    <p class="info-item">
+      <b>Downloads</b> <span>${downloads}</span>
+    </p>
+  </div>
+</div>`;
+}
