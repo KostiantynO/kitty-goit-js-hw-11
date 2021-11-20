@@ -6,7 +6,7 @@ export const settings = { userQuery: '', pageNumber: 1 };
 
 async function getImages() {
   const axiosConfig = {
-    baseURL: 'https://pixabay.com/api',
+    baseURL: 'https://pixabay.com/api/',
     https: true,
     // search images
     params: {
