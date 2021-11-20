@@ -8,6 +8,7 @@ import { settings } from './js/api-service';
 import getImages from './js/api-service';
 
 const refs = getRefs();
+let modalGallery = null;
 
 refs.searchForm.addEventListener('submit', onRequestImages);
 
@@ -19,7 +20,7 @@ async function onRequestImages(event) {
     settings.userQuery = refs.searchInput.value.trim();
     settings.pageNumber = 1;
 
-    const { hits } = await getImages();
+    const { hits, totalHits } = await getImages();
     refs.gallery.innerHTML = '';
 
     if (hits.length === 0) {
@@ -32,8 +33,19 @@ async function onRequestImages(event) {
     }
 
     renderGallery(hits);
+    Notify.success(`Hooray! We found ${totalHits} images.`);
     refs.loadMoreBtn.classList.remove('is-hidden');
+
     settings.pageNumber += 1;
+
+    const perPage = 40;
+    const totalPages = totalHits / perPage;
+    if (totalPages <= settings.pageNumber) {
+      Notify.info("We're sorry, but you've reached the end of search results.");
+      refs.loadMoreBtn.classList.add('is-hidden');
+    }
+
+    modalGallery = initModal('.gallery a');
   } catch (error) {
     console.log(error);
   } finally {
@@ -90,6 +102,32 @@ async function onLoadMoreImages(e) {
   const { hits } = await getImages();
 
   renderGallery(hits);
+  smoothScroll();
+  modalGallery.refresh();
+
   refs.loadMoreBtn.classList.remove('is-hidden');
   settings.pageNumber += 1;
+}
+
+function smoothScroll() {
+  const { height: cardHeight } = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
+}
+
+function initModal(selector) {
+  const modalMarkup = selector;
+
+  const modalOptions = {
+    captionsData: 'alt',
+    animationSpeed: 210,
+    fadeSpeed: 210,
+  };
+
+  return new SimpleLightbox(modalMarkup, modalOptions);
 }
